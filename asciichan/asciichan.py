@@ -26,6 +26,16 @@ class MainPage(Handler):
 	def get(self):
 		self.render("front.html")
 
+	def post(self):
+		title = self.request.get("title")
+		art = self.request.get("art")
+
+		if title and art:
+			self.write("thanks!")
+		else:
+			error = "we need both a title and some artwork"
+			self.render("front.html", error = error)
+
 app = webapp2.WSGIApplication([
     ('/', MainPage)
 ], debug=True)
