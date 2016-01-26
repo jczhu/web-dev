@@ -49,7 +49,7 @@ class NewPost(Handler):
 			e = Entry(title = title, entry = entry)
 			e.put()
 
-			self.redirect("/")
+			self.redirect("/"+str(e.key().id()))
 		else:
 			error = "we need both a title and a blog entry"
 			self.render_newpost(title, entry, error)
