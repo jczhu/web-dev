@@ -1,7 +1,10 @@
 import os
+import hmac
 
 import jinja2
 import webapp2
+
+SECRET = 'imsosecret'
 
 from google.appengine.ext import db
 
@@ -10,6 +13,16 @@ template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
 								autoescape = True)
 
+def hash_str(s):
+	return hmac.new(SECRET, s).hexdigest()
+
+def make_secure_val(s):
+	return "%s|%s" %(s, hash_str(s))
+
+def check_secure_val(h):
+	s = h.split('|')[0]
+	if h == make_secure_val(s):
+		return s
 
 class Handler(webapp2.RequestHandler):
 	def write(self, *a, **kw):
@@ -25,19 +38,23 @@ class Handler(webapp2.RequestHandler):
 class MainPage(Handler):
 	def get(self):
 		self.response.headers['Content-Type'] = 'text/plain'
-		visits = self.request.cookies.get('visits', 0)
-		#make sure visits is an int
-		if visits.isdigit():
-			visits = int(visits) + 1
-		else:
-			visits = 0
+		visits = 0
+		visit_cookie_str = self.request.cookies.get('visits')
+		if visit_cookie_str:
+			cookie_val = check_secure_val(visit_cookie_str)
+			if cookie_val:
+				visits = int(cookie_val)
 
-		self.response.headers.add_header('Set-Cookie', 'visits=%s'%visits)
+		visits += 1
 
-		if visits > 100000:
+		new_cookie_val = make_secure_val(str(visits))
+
+		self.response.headers.add_header('Set-Cookie', 'visits=%s'%new_cookie_val)
+
+		if visits > 10000:
 			self.write("You are the best ever!")
 		else:
-			self.write("You'been here %s times"%visits)
+			self.write("You'been here %s times" % visits)
 
 
 app = webapp2.WSGIApplication([
