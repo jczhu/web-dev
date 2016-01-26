@@ -26,23 +26,16 @@ class Handler(webapp2.RequestHandler):
 class Entry(db.Model):
 	title = db.StringProperty(required = True)
 	entry = db.TextProperty(required = True)
-	created = db.DateTimeProperty(auto_now_add = True)
+	created = db.DateProperty(auto_now_add = True)
 
 class MainPage(Handler):
-	def render_front(self):
-		entries = db.GqlQuery("SELECT * FROM Entry ORDER BY created DESC")
-
+	def get(self):
+		entries = db.GqlQuery("SELECT * FROM Entry ORDER BY created ASC")
 
 		self.render("front.html", entries = entries)
 
-	def get(self):
-		self.render_front()
-
 class NewPost(Handler):
 	def render_newpost(self, title="", entry="", error=""):
-		arts = db.GqlQuery("SELECT * FROM Entry ORDER BY created DESC")
-
-
 		self.render("newpost.html", title=title, entry=entry, error=error)
 
 	def get(self):
@@ -61,6 +54,11 @@ class NewPost(Handler):
 			error = "we need both a title and a blog entry"
 			self.render_newpost(title, entry, error)
 
+class BlogPost(Handler):
+	def get(self, entry_id):
+		e = Entry.get_by_id(int(entry_id))
+		self.render("single-entry.html", entry=e)
+
 app = webapp2.WSGIApplication([
-    ('/', MainPage), ('/newpost', NewPost)
+    ('/', MainPage), ('/newpost', NewPost), (r'/(\d+)', BlogPost)
 ], debug=True)

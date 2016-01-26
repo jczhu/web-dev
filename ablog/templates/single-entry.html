@@ -47,17 +47,13 @@
 
 	<body>
 		<h1>A Blog</h1>
-		<a class="new-post" href="/newpost">New post</a>
 		<hr>
 
-		{% for entry in entries %}
-			<div class="entry">
-				<a class="entry-title" href="/{{entry.key().id()}}">{{entry.title}}</a>
-				<div class="entry-body">{{entry.entry}}</div>
-				<div class="date-created">created {{entry.created}}</div>
-			</div>
-		{% endfor %}
-
+		<div class="entry">
+			<a class="entry-title" href="/{{entry.key().id()}}">{{entry.title}}</a>
+			<div class="entry-body">{{entry.entry}}</div>
+			<div class="date-created">created {{entry.created}}</div>
+		</div>
 
 	</body>
 </html>
