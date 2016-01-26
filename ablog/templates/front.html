@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>A Blog</title>
+	</head>
+
+	<style type="text/css">
+		body {
+			font-family: sans-serif;
+			width: 800px;
+			margin: 0 auto;
+			padding: 10px;
+		}
+
+		label {
+			display: block;
+			font-size: 20px;
+		}
+
+
+		hr {
+			margin: 20px auto;
+		}
+
+		.entry + .entry {
+			margin-top: 20px;
+		}
+
+		.entry-title {
+			font-weight: bold;
+			font-size: 20px;
+		}
+
+		.entry-body {
+			margin: 0;
+			font-size: 17px;
+		}
+	</style>
+
+	<body>
+		<h1>A Blog</h1>
+
+		<hr>
+
+		{% for entry in entries %}
+			<div class="entry">
+				<div class="entry-title">{{entry.title}}</div>
+				<pre class="entry-body">{{entry.entry}}</pre>
+			</div>
+		{% endfor %}
+
+
+	</body>
+</html>
