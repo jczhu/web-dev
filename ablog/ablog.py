@@ -31,7 +31,7 @@ class Entry(db.Model):
 
 class MainPage(Handler):
 	def get(self):
-		entries = db.GqlQuery("SELECT * FROM Entry ORDER BY created ASC")
+		entries = db.GqlQuery("SELECT * FROM Entry ORDER BY created DESC")
 
 		self.render("front.html", entries = entries)
 
