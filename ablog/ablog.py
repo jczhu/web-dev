@@ -71,60 +71,86 @@ class User(db.Model):
 	email = db.StringProperty()
 
 class SignUp(Handler):
-    def render_form(self, username="", invalid_user="", invalid_pass="", diff_pass="", 
-        invalid_email=""):
-        self.render("signup.html", username=username, invalid_user=invalid_user,
-        	invalid_pass=invalid_pass, diff_pass=diff_pass, invalid_email=invalid_email)
+	def render_form(self, username="", invalid_user="", invalid_pass="", diff_pass="", 
+		invalid_email=""):
+		self.render("signup.html", username=username, invalid_user=invalid_user,
+			invalid_pass=invalid_pass, diff_pass=diff_pass, invalid_email=invalid_email)
 
-    def get(self):
-        self.render_form()
+	def get(self):
+		self.render_form()
 
-    def post(self):
-        username = self.request.get('username')
-        password = self.request.get('password')
-        verify = self.request.get('verify')
-        email = self.request.get('email')
+	def post(self):
+		username = self.request.get('username')
+		password = self.request.get('password')
+		verify = self.request.get('verify')
+		email = self.request.get('email')
 
-        check_username = valid_username(username)
-        check_password = valid_password(password)
-        check_verify = (password == verify)
-        check_email = valid_email(email)
+		check_username = valid_username(username)
+		check_password = valid_password(password)
+		check_verify = (password == verify)
+		check_email = valid_email(email)
 
-        user_error, pass_error, verify_error, email_error = "", "", "", ""
-        if not check_username:
-            user_error = "That's not a valid username."
-        elif User.get_by_key_name(username):
-        	user_error = "That username already exists"
-        if not check_password:
-            pass_error = "That's wasn't a valid password."
-        if not check_verify:
-            verify_error = "Your passwords didn't match."
-        if not check_email:
-            email_error = "That's not a valid email."
+		user_error, pass_error, verify_error, email_error = "", "", "", ""
+		if not check_username:
+			user_error = "That's not a valid username."
+		elif User.get_by_key_name(username):
+			user_error = "That username already exists"
+		if not check_password:
+			pass_error = "That's wasn't a valid password."
+		if not check_verify:
+			verify_error = "Your passwords didn't match."
+		if not check_email:
+			email_error = "That's not a valid email."
 
-        if check_username and check_password and check_verify and check_email:
-        	pass_hash = make_pw_hash(username, password)
-        	u = User(key_name=username, username=username, password=pass_hash, email=email)
-        	u.put()
+		if check_username and check_password and check_verify and check_email:
+			pass_hash = make_pw_hash(username, password)
+			u = User(key_name=username, username=username, password=pass_hash, email=email)
+			u.put()
 
-        	# making cookie for username
-        	self.response.headers['Content-Type'] = 'text/plain'
-        	new_cookie_val = make_secure_val(username)
-        	self.response.headers.add_header('Set-Cookie', 'name=%s; Path=/'%str(new_cookie_val))
+			# making cookie for username
+			self.response.headers['Content-Type']='text/plain'
+			new_cookie_val = make_secure_val(username)
+			self.response.headers.add_header('Set-Cookie', 'name=%s; Path=/'
+				%str(new_cookie_val))
 
-        	self.redirect("/welcome") 
-        else:
-            self.render_form(username, user_error, pass_error, verify_error, email_error)
+			self.redirect("/welcome") 
+		else:
+			self.render_form(username, user_error, pass_error, verify_error, email_error)
+
+class Login(Handler):
+	def render_login(self, error=""):
+		self.render("login.html", error=error)
+
+	def get(self):
+		self.render_login()
+
+	def post(self):
+		username = self.request.get('username')
+		password = self.request.get('password')
+
+		if not User.get_by_key_name(username):
+			self.render_login(error="Invalid login")
+		else:
+			salt = User.get_by_key_name(username).password.split(',')[0]
+			h = make_pw_hash(username, password, salt)
+			if valid_pw(username, password, h):
+				new_cookie_val = make_secure_val(username)
+				self.response.headers.add_header('Set-Cookie', 'name=%s; Path=/'
+					%str(new_cookie_val))
+
+				self.redirect("/welcome")
+			else:
+				self.render_login(error="Invalid login")
 
 class Welcome(Handler):
-    def get(self):
-    	name_cookie = self.request.cookies.get('name')
-    	if name_cookie:
-    		name_val = check_secure_val(name_cookie)
-    		if name_val:
-        		self.response.out.write("Welcome, %s!"%name_val)
-        	else:
-        		self.redirect('/signup')
+	def get(self):
+		name_cookie = self.request.cookies.get('name')
+		if name_cookie:
+			name_val = check_secure_val(name_cookie)
+			if name_val:
+				self.response.out.write("Welcome, %s!"%name_val)
+			else:
+				self.redirect('/signup')
 
 def hash_str(s):
 	return hmac.new(secret, s).hexdigest()
@@ -138,32 +164,32 @@ def check_secure_val(h):
 		return s
 
 def make_salt(length = 5):
-    return ''.join(random.choice(letters) for x in xrange(length))
+	return ''.join(random.choice(letters) for x in xrange(length))
 
 def make_pw_hash(name, pw, salt = None):
-    if not salt:
-        salt = make_salt()
-    h = hashlib.sha256(name + pw + salt).hexdigest()
-    return '%s,%s' % (salt, h)
+	if not salt:
+		salt = make_salt()
+	h = hashlib.sha256(name + pw + salt).hexdigest()
+	return '%s,%s' % (salt, h)
 
 def valid_pw(name, password, h):
-    salt = h.split(',')[0]
-    return h == make_pw_hash(name, password, salt)
+	salt = h.split(',')[0]
+	return h == make_pw_hash(name, password, salt)
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 PASS_RE = re.compile(r"^.{3,20}$")
 EMAIL_RE = re.compile(r"^[\S]+@[\S]+\.[\S]+$")
 
 def valid_username(username):
-    return USER_RE.match(username)
+	return USER_RE.match(username)
 
 def valid_password(password):
-    return PASS_RE.match(password)
+	return PASS_RE.match(password)
 
 def valid_email(email):
-    return EMAIL_RE.match(email) or email == ''
+	return EMAIL_RE.match(email) or email == ''
 
 app = webapp2.WSGIApplication([
-    ('/', MainPage), ('/newpost', NewPost), (r'/(\d+)', BlogPost), ('/signup', SignUp), 
-    ('/welcome', Welcome)
+	('/', MainPage), ('/newpost', NewPost), (r'/(\d+)', BlogPost), ('/signup', SignUp), 
+	('/welcome', Welcome), ('/login', Login)
 ], debug=True)
