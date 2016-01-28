@@ -28,8 +28,9 @@ class Handler(webapp2.RequestHandler):
 	def render(self, template, **kw):
 		self.write(self.render_str(template, **kw))
 
-IP_URL = "http://api.hostip.info/?ip="
+IP_URL = "http://ip-api.com/xml/?="
 def get_coords(ip):
+	ip = "4.2.2.2" # for testing (so won't get localhost)
 	url = IP_URL + ip
 	content = None
 	try:
@@ -38,11 +39,16 @@ def get_coords(ip):
 		return
 
 	if content:
+		#parse the xml and find the coordinates
 		d = minidom.parseString(content)
-		coords = d.getElementByTagName("gml:coordinates")
-		if coords and coords[0].childNodes[0].nodeValue:
-			lon, lat = coords[0].childNodes[0].nodeValue.split(',')
-			return db.GeoPt(lat, lon) 
+		status = d.getElementsByTagName('status')[0].childNodes[0].nodeValue
+        if status == 'success':
+            lonNode = d.getElementsByTagName('lon')[0]
+            latNode = d.getElementsByTagName('lat')[0]
+            if lonNode and latNode and lonNode.childNodes[0].nodeValue and latNode.childNodes[0].nodeValue:
+                lon = lonNode.childNodes[0].nodeValue
+                lat = latNode.childNodes[0].nodeValue
+                return db.GeoPt(lat, lon)
 
 class Art(db.Model):
 	title = db.StringProperty(required = True)
