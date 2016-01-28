@@ -110,7 +110,7 @@ class SignUp(Handler):
         	# making cookie for username
         	self.response.headers['Content-Type'] = 'text/plain'
         	new_cookie_val = make_secure_val(username)
-        	self.response.headers.add_header('Set-Cookie', 'name=%s'%str(new_cookie_val))
+        	self.response.headers.add_header('Set-Cookie', 'name=%s; Path=/'%str(new_cookie_val))
 
         	self.redirect("/welcome") 
         else:
