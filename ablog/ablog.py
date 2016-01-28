@@ -91,8 +91,10 @@ class SignUp(Handler):
         check_email = valid_email(email)
 
         user_error, pass_error, verify_error, email_error = "", "", "", ""
-        if not check_username: # also check if username already in database
+        if not check_username:
             user_error = "That's not a valid username."
+        elif User.get_by_key_name(username):
+        	user_error = "That username already exists"
         if not check_password:
             pass_error = "That's wasn't a valid password."
         if not check_verify:
@@ -102,7 +104,7 @@ class SignUp(Handler):
 
         if check_username and check_password and check_verify and check_email:
         	pass_hash = make_pw_hash(username, password)
-        	u = User(username=username, password=pass_hash, email=email)
+        	u = User(key_name=username, username=username, password=pass_hash, email=email)
         	u.put()
 
         	# making cookie for username
