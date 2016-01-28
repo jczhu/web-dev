@@ -1,11 +1,16 @@
 import os
 import re
+import hmac
+import hashlib
+import random
+from string import letters
 
 import jinja2
 import webapp2
 
 from google.appengine.ext import db
 
+secret = "Imsosecret"
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
@@ -96,13 +101,52 @@ class SignUp(Handler):
             email_error = "That's not a valid email."
 
         if check_username and check_password and check_verify and check_email:
-            self.redirect("/welcome?username=" + username) #this will have to change, store username w/cookie
+        	pass_hash = make_pw_hash(username, password)
+        	u = User(username=username, password=pass_hash, email=email)
+        	u.put()
+
+        	# making cookie for username
+        	self.response.headers['Content-Type'] = 'text/plain'
+        	new_cookie_val = make_secure_val(username)
+        	self.response.headers.add_header('Set-Cookie', 'name=%s'%str(new_cookie_val))
+
+        	self.redirect("/welcome") 
         else:
             self.render_form(username, user_error, pass_error, verify_error, email_error)
 
 class Welcome(Handler):
     def get(self):
-        self.response.out.write("Welcome, " + self.request.get('username') + "!")
+    	name_cookie = self.request.cookies.get('name')
+    	if name_cookie:
+    		name_val = check_secure_val(name_cookie)
+    		if name_val:
+        		self.response.out.write("Welcome, %s!"%name_val)
+        	else:
+        		self.redirect('/signup')
+
+def hash_str(s):
+	return hmac.new(secret, s).hexdigest()
+
+def make_secure_val(s):
+	return "%s|%s" %(s, hash_str(s))
+
+def check_secure_val(h):
+	s = h.split('|')[0]
+	if h == make_secure_val(s):
+		return s
+
+def make_salt(length = 5):
+    return ''.join(random.choice(letters) for x in xrange(length))
+
+def make_pw_hash(name, pw, salt = None):
+    if not salt:
+        salt = make_salt()
+    h = hashlib.sha256(name + pw + salt).hexdigest()
+    return '%s,%s' % (salt, h)
+
+def valid_pw(name, password, h):
+    salt = h.split(',')[0]
+    return h == make_pw_hash(name, password, salt)
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 PASS_RE = re.compile(r"^.{3,20}$")
