@@ -30,8 +30,7 @@ class Handler(webapp2.RequestHandler):
 
 IP_URL = "http://ip-api.com/xml/?="
 def get_coords(ip):
-	ip = "4.2.2.2" # for testing (so won't get localhost)
-	ip = "23.24.209.141" # hardcoding Udacity's ip also for testing
+	
 	url = IP_URL + ip
 	content = None
 	try:
