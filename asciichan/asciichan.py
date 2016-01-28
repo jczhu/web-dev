@@ -42,13 +42,18 @@ def get_coords(ip):
 		#parse the xml and find the coordinates
 		d = minidom.parseString(content)
 		status = d.getElementsByTagName('status')[0].childNodes[0].nodeValue
-        if status == 'success':
-            lonNode = d.getElementsByTagName('lon')[0]
-            latNode = d.getElementsByTagName('lat')[0]
-            if lonNode and latNode and lonNode.childNodes[0].nodeValue and latNode.childNodes[0].nodeValue:
-                lon = lonNode.childNodes[0].nodeValue
-                lat = latNode.childNodes[0].nodeValue
-                return db.GeoPt(lat, lon)
+		if status == 'success':
+			lonNode = d.getElementsByTagName('lon')[0]
+			latNode = d.getElementsByTagName('lat')[0]
+			if lonNode and latNode and lonNode.childNodes[0].nodeValue and latNode.childNodes[0].nodeValue:
+				lon = lonNode.childNodes[0].nodeValue
+				lat = latNode.childNodes[0].nodeValue
+				return db.GeoPt(lat, lon)
+
+GMAPS_URL = "http://maps.googleapis.com/maps/api/staticmap?size=380x263&sensor=false&"
+def gmaps_img(points):
+	markers = '&'.join('markers=%s,%s' % (p.lat, p.lon) for p in points)
+	return GMAPS_URL + markers
 
 class Art(db.Model):
 	title = db.StringProperty(required = True)
@@ -59,9 +64,20 @@ class Art(db.Model):
 class MainPage(Handler):
 	def render_front(self, title="", art="", error=""):
 		arts = db.GqlQuery("SELECT * FROM Art ORDER BY created DESC LIMIT 10")
-
-
-		self.render("front.html", title=title, art=art, error=error, arts = arts)
+		arts = list(arts) #arts was cursor, prevent multiple queries
+		
+		#find which arts have coords
+		points = filter(None, (a.coords for a in arts)) #return art coords that aren't none
+		
+		#if we have any arts coords, make image url
+		img_url = None
+		if points:
+			img_url = gmaps_img(points)
+		
+		
+		#display image url
+		self.render("front.html", title=title, art=art, error=error, arts = arts,
+			img_url=img_url)
 
 	def get(self):
 		return self.render_front()
@@ -85,5 +101,5 @@ class MainPage(Handler):
 			self.render_front(title, art, error)
 
 app = webapp2.WSGIApplication([
-    ('/', MainPage)
+	('/', MainPage)
 ], debug=True)
