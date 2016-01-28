@@ -102,7 +102,8 @@ class SignUp(Handler):
 		if not check_email:
 			email_error = "That's not a valid email."
 
-		if check_username and check_password and check_verify and check_email:
+		if check_username and check_password and check_verify and check_email and not User.get_by_key_name(username):
+
 			pass_hash = make_pw_hash(username, password)
 			u = User(key_name=username, username=username, password=pass_hash, email=email)
 			u.put()
