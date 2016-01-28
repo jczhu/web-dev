@@ -142,6 +142,11 @@ class Login(Handler):
 			else:
 				self.render_login(error="Invalid login")
 
+class Logout(Handler):
+	def get(self):
+		self.response.headers.add_header('Set-Cookie', 'name=""; Path=/')
+		self.redirect('/signup')
+
 class Welcome(Handler):
 	def get(self):
 		name_cookie = self.request.cookies.get('name')
@@ -151,6 +156,8 @@ class Welcome(Handler):
 				self.response.out.write("Welcome, %s!"%name_val)
 			else:
 				self.redirect('/signup')
+		else:
+			self.redirect('/signup')
 
 def hash_str(s):
 	return hmac.new(secret, s).hexdigest()
@@ -191,5 +198,5 @@ def valid_email(email):
 
 app = webapp2.WSGIApplication([
 	('/', MainPage), ('/newpost', NewPost), (r'/(\d+)', BlogPost), ('/signup', SignUp), 
-	('/welcome', Welcome), ('/login', Login)
+	('/welcome', Welcome), ('/login', Login), ('/logout', Logout)
 ], debug=True)
