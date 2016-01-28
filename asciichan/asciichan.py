@@ -54,6 +54,7 @@ class Art(db.Model):
 	title = db.StringProperty(required = True)
 	art = db.TextProperty(required = True)
 	created = db.DateTimeProperty(auto_now_add = True)
+	coords = db.GeoPtProperty() #not required because would affect old art submissions
 
 class MainPage(Handler):
 	def render_front(self, title="", art="", error=""):
@@ -63,8 +64,6 @@ class MainPage(Handler):
 		self.render("front.html", title=title, art=art, error=error, arts = arts)
 
 	def get(self):
-		self.write(self.request.remote_addr)
-		self.write(repr(get_coords(self.request.remote_addr)))
 		return self.render_front()
 
 	def post(self):
@@ -73,8 +72,11 @@ class MainPage(Handler):
 
 		if title and art:
 			a = Art(title = title, art = art)
-			#lookup the user's coords from their IP
-			#if we have coordinates, add them to the Art
+			#if we have coords, add to Art object
+			coords = get_coords(self.request.remote_addr)
+			if coords:
+				a.coords = coords
+
 			a.put()
 
 			self.redirect("/")
