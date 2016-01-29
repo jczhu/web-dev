@@ -3,6 +3,7 @@ import re
 import hmac
 import hashlib
 import random
+import json
 from string import letters
 
 import jinja2
@@ -158,6 +159,19 @@ class Welcome(Handler):
 		else:
 			self.redirect('/signup')
 
+class JsonHandler(Handler):
+	def get(self, entry_id=None):
+		entries = None
+		if entry_id:
+			entries = Entry.get_by_id(int(entry_id))
+		else:
+			entries = db.GqlQuery("SELECT * FROM Entry ORDER BY created DESC LIMIT 10")
+		entries = list(entries)
+		list_dict = []
+		for e in entries:
+			
+		d = {}
+
 def hash_str(s):
 	return hmac.new(secret, s).hexdigest()
 
@@ -197,5 +211,5 @@ def valid_email(email):
 
 app = webapp2.WSGIApplication([
 	('/', MainPage), ('/newpost', NewPost), (r'/(\d+)', BlogPost), ('/signup', SignUp), 
-	('/welcome', Welcome), ('/login', Login), ('/logout', Logout)
+	('/welcome', Welcome), ('/login', Login), ('/logout', Logout), ('/.json', JsonHandler)
 ], debug=True)
