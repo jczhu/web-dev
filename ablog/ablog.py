@@ -132,9 +132,7 @@ class Login(Handler):
 		if not User.get_by_key_name(username):
 			self.render_login(error="Invalid login")
 		else:
-			salt = User.get_by_key_name(username).password.split(',')[0]
-			h = make_pw_hash(username, password, salt)
-			if valid_pw(username, password, h):
+			if valid_pw(username, password, User.get_by_key_name(username).password):
 				new_cookie_val = make_secure_val(username)
 				self.response.headers.add_header('Set-Cookie', 'name=%s; Path=/'
 					%str(new_cookie_val))
