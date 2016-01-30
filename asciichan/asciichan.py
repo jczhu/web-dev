@@ -2,6 +2,7 @@ import os
 import sys
 import urllib2
 import re
+import logging
 
 from xml.dom import minidom
 from string import letters
@@ -61,10 +62,21 @@ class Art(db.Model):
 	created = db.DateTimeProperty(auto_now_add = True)
 	coords = db.GeoPtProperty() #not required because would affect old art submissions
 
-class MainPage(Handler):
-	def render_front(self, title="", art="", error=""):
+CACHE = {}
+def top_arts(update=False):
+	key = 'top'
+	if not update and key in CACHE:
+		arts = CACHE[key]
+	else:
+		logging.error("DB QUERY")
 		arts = db.GqlQuery("SELECT * FROM Art ORDER BY created DESC LIMIT 10")
 		arts = list(arts) #arts was cursor, prevent multiple queries
+		CACHE[key] = arts
+	return arts
+
+class MainPage(Handler):
+	def render_front(self, title="", art="", error=""):
+		arts = top_arts()
 		
 		#find which arts have coords
 		points = filter(None, (a.coords for a in arts)) #return art coords that aren't none
@@ -94,6 +106,8 @@ class MainPage(Handler):
 				a.coords = coords
 
 			a.put()
+			#rerun the query and update the cache
+			top_arts(True)
 
 			self.redirect("/")
 		else:

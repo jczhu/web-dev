@@ -13,10 +13,9 @@
 		}
 
 		.map {
-			position: absolute;
 			right: 0;
 			top: 0;
-			margin: 100px;
+			margin: 5px;
 		}
 
 		.error {
@@ -62,30 +61,47 @@
 			margin: 0;
 			font-size: 17px;
 		}
+
+		#wrapper {
+			overflow: hidden;
+		}
+
+		#left {
+			float: left;
+		}
+
 	</style>
 
 	<body>
 		<h1>/ascii/</h1>
 
-		<form method="post">
-			<label>
-				<div>title</div>
-				<input type="text" name="title" value="{{title}}">
-			</label>
+		<div id="wrapper">
+			<div id="left">
+				<form method="post">
+					<label>
+						<div>title</div>
+						<input type="text" name="title" value="{{title}}">
+					</label>
 
-			<label>
-				<div>art</div>
-				<textarea name="art">{{art}}</textarea>
-			</label>
+					<label>
+						<div>art</div>
+						<textarea name="art">{{art}}</textarea>
+					</label>
 
-			<div class="error">{{error}}</div>
+					<div class="error">{{error}}</div>
 
-			<input type="submit">
-		</form>
+					<input type="submit">
+				</form>
+			</div>
 
-		{% if img_url %}
-			<img class="map" src="{{img_url}}">
-		{% endif %}
+			<div id="left">
+				{% if img_url %}
+					<img class="map" src="{{img_url}}">
+				{% endif %}
+			</div>
+		</div>
+
+		
 
 		<hr>
 
