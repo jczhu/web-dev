@@ -9,6 +9,7 @@ from string import letters
 import jinja2
 import webapp2
 
+from google.appengine.api import memcache
 from google.appengine.ext import db
 
 secret = "Imsosecret"
@@ -29,16 +30,23 @@ class Handler(webapp2.RequestHandler):
 	def render(self, template, **kw):
 		self.write(self.render_str(template, **kw))
 
-
 class Entry(db.Model):
 	title = db.StringProperty(required = True)
 	entry = db.TextProperty(required = True)
 	created = db.DateProperty(auto_now_add = True)
 
-class MainPage(Handler):
-	def get(self):
+def top_entries(update=False):
+	key = 'top'
+	entries = memcache.get(key)
+	if entries is None or update:
 		entries = db.GqlQuery("SELECT * FROM Entry ORDER BY created DESC LIMIT 10")
 		entries = list(entries)
+		memcache.set(key, entries)
+	return entries
+
+class MainPage(Handler):
+	def get(self):
+		entries = top_entries()
 
 		self.render("front.html", entries = entries)
 
@@ -56,6 +64,9 @@ class NewPost(Handler):
 		if title and entry:
 			e = Entry(title = title, entry = entry)
 			e.put()
+
+			#rerun the query and update cache
+			top_entries(True)
 
 			self.redirect("/"+str(e.key().id()))
 		else:
