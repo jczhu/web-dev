@@ -38,6 +38,7 @@ class Entry(db.Model):
 class MainPage(Handler):
 	def get(self):
 		entries = db.GqlQuery("SELECT * FROM Entry ORDER BY created DESC LIMIT 10")
+		entries = list(entries)
 
 		self.render("front.html", entries = entries)
 
@@ -160,17 +161,36 @@ class Welcome(Handler):
 			self.redirect('/signup')
 
 class JsonHandler(Handler):
-	def get(self, entry_id=None):
-		entries = None
-		if entry_id:
-			entries = Entry.get_by_id(int(entry_id))
-		else:
+	def get(self, entry_id= -1):
+		if entry_id == -1:
 			entries = db.GqlQuery("SELECT * FROM Entry ORDER BY created DESC LIMIT 10")
-		entries = list(entries)
-		list_dict = []
-		for e in entries:
-			
-		d = {}
+			entries = list(entries)
+			list_dict = []
+			for e in entries:
+				d = {}
+				d["title"] = e.title
+				d["entry"] = e.entry
+				d["created"] = e.created.strftime('%B %d, %Y')
+				list_dict.append(d)
+
+			list_dict = json.dumps(list_dict)
+
+			self.render("json.html", entries=list_dict)
+		
+		else:
+			e = Entry.get_by_id(int(entry_id))
+			list_dict = []
+			d = {}
+			d["title"] = e.title
+			d["entry"] = e.entry
+			d["created"] = e.created.strftime('%B %d, %Y')
+			list_dict.append(d)
+
+			list_dict = json.dumps(list_dict)
+
+			self.render("json.html", entries=list_dict)
+
+		
 
 def hash_str(s):
 	return hmac.new(secret, s).hexdigest()
@@ -211,5 +231,6 @@ def valid_email(email):
 
 app = webapp2.WSGIApplication([
 	('/', MainPage), ('/newpost', NewPost), (r'/(\d+)', BlogPost), ('/signup', SignUp), 
-	('/welcome', Welcome), ('/login', Login), ('/logout', Logout), ('/.json', JsonHandler)
+	('/welcome', Welcome), ('/login', Login), ('/logout', Logout), 
+	(r'/(\d*)/.json', JsonHandler), ('/.json', JsonHandler)
 ], debug=True)
