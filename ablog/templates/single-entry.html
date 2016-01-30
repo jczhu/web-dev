@@ -17,13 +17,15 @@
 			|
 			<a class="login-link" href="/logout">logout</a>
 		</div>
-		<hr>
 
-		<div class="entry">
-			<a class="post-title" href="/{{entry.key().id()}}">{{entry.title}}</a>
-			<pre class="post-content">{{entry.entry}}</pre>
-			<div class="post-date">created {{entry.created}}</div>
-		</div>
+		<div class="post">
+				<div class="post-heading">
+					<a class="post-title" href="/{{entry.key().id()}}">{{entry.title}}</a>
+
+					<div class="post-date">{{entry.created.month}} {{entry.created.day}}, {{entry.created.year}}</div>
+				</div>
+				<pre class="post-content">{{entry.entry}}</pre>
+			</div>
 
 	</body>
 </html>

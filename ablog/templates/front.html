@@ -19,13 +19,15 @@
 			|
 			<a class="login-link" href="/logout">logout</a>
 		</div>
-		<hr>
 
 		{% for entry in entries %}
 			<div class="post">
-				<a class="post-title" href="/{{entry.key().id()}}">{{entry.title}}</a>
+				<div class="post-heading">
+					<a class="post-title" href="/{{entry.key().id()}}">{{entry.title}}</a>
+
+					<div class="post-date">{{entry.created.strftime('%B %d, %Y')}}</div>
+				</div>
 				<pre class="post-content">{{entry.entry}}</pre>
-				<div class="post-date">created {{entry.created}}</div>
 			</div>
 		{% endfor %}
 
