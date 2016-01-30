@@ -10,8 +10,10 @@ from string import letters
 import jinja2
 import webapp2
 
+from google.appengine.api import memcache
 from google.appengine.ext import db
 
+DEBUG = os.environ['SERVER_SOFTWARE'].startswith('Development')
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
@@ -62,16 +64,14 @@ class Art(db.Model):
 	created = db.DateTimeProperty(auto_now_add = True)
 	coords = db.GeoPtProperty() #not required because would affect old art submissions
 
-CACHE = {}
 def top_arts(update=False):
 	key = 'top'
-	if not update and key in CACHE:
-		arts = CACHE[key]
-	else:
+	arts = memcache.get(key)
+	if arts is None or update:
 		logging.error("DB QUERY")
 		arts = db.GqlQuery("SELECT * FROM Art ORDER BY created DESC LIMIT 10")
 		arts = list(arts) #arts was cursor, prevent multiple queries
-		CACHE[key] = arts
+		memcache.set(key, arts)
 	return arts
 
 class MainPage(Handler):
