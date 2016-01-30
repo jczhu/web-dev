@@ -3,18 +3,29 @@
 	<head>
 	<link type="text/css" rel="stylesheet" href="../static/main.css" />
 
-		<title>A Blog</title>
+		<title>a blog</title>
 	</head>
 
 	<body>
-		<a class="main-title" href="/">A Blog</a>
-		<hr>
-
-		<div class="entry">
-			<a class="post-title" href="/{{entry.key().id()}}">{{entry.title}}</a>
-			<div class="post-content">{{entry.entry}}</div>
-			<div class="post-date">created {{entry.created}}</div>
+		<a class="main-title" href="/">a blog</a>
+		<div class="login-area">
+			<a class="login-link" href="/newpost">new post</a>
+			|
+			<a class="login-link" href="/login">login</a>
+			|
+			<a class="login-link" href="/signup">signup</a>
+			|
+			<a class="login-link" href="/logout">logout</a>
 		</div>
+
+		<div class="post">
+				<div class="post-heading">
+					<a class="post-title" href="/{{entry.key().id()}}">{{entry.title}}</a>
+
+					<div class="post-date">{{entry.created.month}} {{entry.created.day}}, {{entry.created.year}}</div>
+				</div>
+				<pre class="post-content">{{entry.entry}}</pre>
+			</div>
 
 	</body>
 </html>

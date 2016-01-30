@@ -2,6 +2,7 @@ import os
 import sys
 import urllib2
 import re
+import logging
 
 from xml.dom import minidom
 from string import letters
@@ -9,8 +10,10 @@ from string import letters
 import jinja2
 import webapp2
 
+from google.appengine.api import memcache
 from google.appengine.ext import db
 
+DEBUG = os.environ['SERVER_SOFTWARE'].startswith('Development')
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
@@ -61,10 +64,19 @@ class Art(db.Model):
 	created = db.DateTimeProperty(auto_now_add = True)
 	coords = db.GeoPtProperty() #not required because would affect old art submissions
 
-class MainPage(Handler):
-	def render_front(self, title="", art="", error=""):
+def top_arts(update=False):
+	key = 'top'
+	arts = memcache.get(key)
+	if arts is None or update:
+		logging.error("DB QUERY")
 		arts = db.GqlQuery("SELECT * FROM Art ORDER BY created DESC LIMIT 10")
 		arts = list(arts) #arts was cursor, prevent multiple queries
+		memcache.set(key, arts)
+	return arts
+
+class MainPage(Handler):
+	def render_front(self, title="", art="", error=""):
+		arts = top_arts()
 		
 		#find which arts have coords
 		points = filter(None, (a.coords for a in arts)) #return art coords that aren't none
@@ -94,6 +106,8 @@ class MainPage(Handler):
 				a.coords = coords
 
 			a.put()
+			#rerun the query and update the cache
+			top_arts(True)
 
 			self.redirect("/")
 		else:
