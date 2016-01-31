@@ -13,6 +13,7 @@ from google.appengine.api import memcache
 from google.appengine.ext import db
 
 secret = "Imsosecret"
+key = 'top'
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
@@ -35,13 +36,12 @@ class Entry(db.Model):
 	entry = db.TextProperty(required = True)
 	created = db.DateProperty(auto_now_add = True)
 
-def top_entries(update=False):
-	key = 'top'
+def top_entries():
 	entries = memcache.get(key)
-	if entries is None or update:
+	if entries is None:
 		entries = db.GqlQuery("SELECT * FROM Entry ORDER BY created DESC LIMIT 10")
 		entries = list(entries)
-		memcache.set(key, entries)
+		memcache.set(key=key, value=entries)
 	return entries
 
 class MainPage(Handler):
@@ -65,8 +65,8 @@ class NewPost(Handler):
 			e = Entry(title = title, entry = entry)
 			e.put()
 
-			#rerun the query and update cache
-			top_entries(True)
+			#rerun the query and update cache by deleting key from cache
+			memcache.delete(key=key)
 
 			self.redirect("/"+str(e.key().id()))
 		else:

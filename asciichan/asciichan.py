@@ -64,11 +64,10 @@ class Art(db.Model):
 	created = db.DateTimeProperty(auto_now_add = True)
 	coords = db.GeoPtProperty() #not required because would affect old art submissions
 
-def top_arts(update=False):
-	key = 'top'
+key = 'top'
+def top_arts():
 	arts = memcache.get(key)
-	if arts is None or update:
-		logging.error("DB QUERY")
+	if arts is None:
 		arts = db.GqlQuery("SELECT * FROM Art ORDER BY created DESC LIMIT 10")
 		arts = list(arts) #arts was cursor, prevent multiple queries
 		memcache.set(key, arts)
@@ -106,8 +105,9 @@ class MainPage(Handler):
 				a.coords = coords
 
 			a.put()
+
 			#rerun the query and update the cache
-			top_arts(True)
+			memcache.delete(key=key)
 
 			self.redirect("/")
 		else:
