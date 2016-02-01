@@ -17,6 +17,7 @@ secret = "Imsosecret"
 key = 'top'
 last_queried = datetime.now()
 last_queried_permalink = None
+last_entry_id = None
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
@@ -51,11 +52,15 @@ def top_entries():
 
 class MainPage(Handler):
 	def get(self):
+		global last_queried_permalink
+		global last_entry_id
 		global last_queried
+		last_queried_permalink = None # reset
+		last_entry_id = None
 		entries = top_entries()
-		age = datetime.now() - last_queried
 
-		self.render("front.html", entries = entries, age=round(age.total_seconds()))
+		age = datetime.now() - last_queried
+		self.render("front.html", entries=entries, age=round(age.total_seconds()))
 
 class NewPost(Handler):
 	def render_newpost(self, title="", entry="", error=""):
@@ -83,9 +88,16 @@ class NewPost(Handler):
 class BlogPost(Handler):
 	def get(self, entry_id):
 		global last_queried_permalink
+		global last_entry_id
+		global last_queried
 		e = Entry.get_by_id(int(entry_id))
-		age=0
-		if not last_queried_permalink:
+
+		if not last_queried_permalink or not last_entry_id:
+			last_entry_id = entry_id
+			last_queried_permalink = datetime.now()
+			self.render("single-entry.html", entry=e, age=0)
+		elif last_entry_id != entry_id:
+			last_entry_id = entry_id
 			last_queried_permalink = datetime.now()
 			self.render("single-entry.html", entry=e, age=0)
 		else:
