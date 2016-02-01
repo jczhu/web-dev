@@ -4,6 +4,7 @@ import hmac
 import hashlib
 import random
 import json
+from datetime import datetime
 from string import letters
 
 import jinja2
@@ -14,6 +15,7 @@ from google.appengine.ext import db
 
 secret = "Imsosecret"
 key = 'top'
+last_queried = datetime.now()
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
@@ -39,6 +41,7 @@ class Entry(db.Model):
 def top_entries():
 	entries = memcache.get(key)
 	if entries is None:
+		last_queried = datetime.now()
 		entries = db.GqlQuery("SELECT * FROM Entry ORDER BY created DESC LIMIT 10")
 		entries = list(entries)
 		memcache.set(key=key, value=entries)
@@ -47,8 +50,9 @@ def top_entries():
 class MainPage(Handler):
 	def get(self):
 		entries = top_entries()
+		age = datetime.now() - last_queried
 
-		self.render("front.html", entries = entries)
+		self.render("front.html", entries = entries, age=round(age.total_seconds(), 0))
 
 class NewPost(Handler):
 	def render_newpost(self, title="", entry="", error=""):
