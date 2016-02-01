@@ -16,6 +16,7 @@ from google.appengine.ext import db
 secret = "Imsosecret"
 key = 'top'
 last_queried = datetime.now()
+last_queried_permalink = None
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
@@ -39,6 +40,7 @@ class Entry(db.Model):
 	created = db.DateProperty(auto_now_add = True)
 
 def top_entries():
+	global last_queried
 	entries = memcache.get(key)
 	if entries is None:
 		last_queried = datetime.now()
@@ -49,10 +51,11 @@ def top_entries():
 
 class MainPage(Handler):
 	def get(self):
+		global last_queried
 		entries = top_entries()
 		age = datetime.now() - last_queried
 
-		self.render("front.html", entries = entries, age=round(age.total_seconds(), 0))
+		self.render("front.html", entries = entries, age=round(age.total_seconds()))
 
 class NewPost(Handler):
 	def render_newpost(self, title="", entry="", error=""):
@@ -79,8 +82,15 @@ class NewPost(Handler):
 
 class BlogPost(Handler):
 	def get(self, entry_id):
+		global last_queried_permalink
 		e = Entry.get_by_id(int(entry_id))
-		self.render("single-entry.html", entry=e)
+		age=0
+		if not last_queried_permalink:
+			last_queried_permalink = datetime.now()
+			self.render("single-entry.html", entry=e, age=0)
+		else:
+			age = datetime.now() - last_queried_permalink
+			self.render("single-entry.html", entry=e, age=round(age.total_seconds()))
 
 class User(db.Model):
 	username = db.StringProperty(required = True)
