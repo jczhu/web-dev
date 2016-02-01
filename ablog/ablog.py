@@ -227,6 +227,10 @@ class JsonHandler(Handler):
 
 			self.render("json.html", entries=list_dict)
 
+class FlushHandler(Handler):
+	def get(self):
+		memcache.flush_all()
+		self.redirect('/')
 		
 
 def hash_str(s):
@@ -269,5 +273,5 @@ def valid_email(email):
 app = webapp2.WSGIApplication([
 	('/', MainPage), ('/newpost', NewPost), (r'/(\d+)', BlogPost), ('/signup', SignUp), 
 	('/welcome', Welcome), ('/login', Login), ('/logout', Logout), 
-	(r'/(\d*)/.json', JsonHandler), ('/.json', JsonHandler)
+	(r'/(\d*)/.json', JsonHandler), ('/.json', JsonHandler), ('/flush', FlushHandler)
 ], debug=True)
